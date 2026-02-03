@@ -1,0 +1,18 @@
+{
+  "fields": [
+    {
+      "name": "halo",
+      "type": {},
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "world",
+      "type": {},
+      "nullable": true,
+      "metadata": {}
+    }
+  ],
+  "metadata": {},
+  "dictionaries": {}
+}
