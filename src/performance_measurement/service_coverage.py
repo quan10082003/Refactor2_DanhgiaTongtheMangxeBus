@@ -8,7 +8,7 @@ import numpy as np
 from scipy.spatial import KDTree # Thư viện "thần thánh" cho bài toán này
 
 def calculte_service_coverage(people_dict: dict[str,Person], bus_stops_dict: dict[str,StopFacility], act_coveraged: str, radia_m: float):
-    stop_coords = np.array([[float(s.coord.x), float(s.coord.y)] for s in bus_stops_dict.values()])
+    stop_coords = np.array([[s.coord.x, s.coord.y] for s in bus_stops_dict.values()])
     
     # 2. Xây dựng cây KD-Tree từ các trạm dừng
     # Việc này chỉ tốn công một lần duy nhất
@@ -21,7 +21,7 @@ def calculte_service_coverage(people_dict: dict[str,Person], bus_stops_dict: dic
             continue
 
         act_p = person.coords_act_dict[act_coveraged]
-        query_point = [float(act_p.x), float(act_p.y)]
+        query_point = [act_p.x, act_p.y]
         
         # 4. Sử dụng hàm query_ball_point để tìm tất cả các trạm trong bán kính radia_m
         # Hàm này cực nhanh vì nó loại bỏ các vùng không gian không liên quan
@@ -38,11 +38,6 @@ if __name__ == "__main__":
     path = load_config(r"config/config_path.yaml")
     schedule = path.paths.transit_schedule
     plan = path.paths.plan
-
-
-    # #### Thay the simple scenario
-    # schedule = "scenario\simple_scenario\schedule.xml"
-    # plan = "scenario\simple_scenario\plans.xml"
 
     _, bus_stops_dict = generate_bus_routes_and_stops_dict(transit_schedule_path=schedule, bus_route_hint_str="bus")
     people_dict = generate_people_acts_coord_dict(plan_path=plan)

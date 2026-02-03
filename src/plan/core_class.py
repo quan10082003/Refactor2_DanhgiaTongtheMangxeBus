@@ -18,3 +18,18 @@ class Person:
                 self.is_coord_valid = False
                 current_p.x = point.x
                 current_p.y = point.y
+
+def get_boundary_nodes_of_plans(person_dict: dict[str,Person]) -> (Point, Point):
+    min_x = float('inf')
+    min_y = float('inf')
+    max_x = float('-inf')
+    max_y = float('-inf')
+
+    for person in person_dict.values():
+        for act in person.coords_act_dict.values():
+            min_x = min(min_x, act.x)
+            min_y = min(min_y, act.y)
+            max_x = max(max_x, act.x)
+            max_y = max(max_y, act.y)
+
+    return Point(min_x, min_y), Point(max_x, max_y)

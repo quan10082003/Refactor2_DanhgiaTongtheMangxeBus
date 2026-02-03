@@ -29,13 +29,15 @@ def generate_bus_routes_and_stops_dict(transit_schedule_path: str, bus_route_hin
 
             if is_public_transport_bus(vehicle_type=transit_mode, bus_hint_str=bus_route_hint_str) :
                 route_id = route.xpath("@id")[0]
-                print(route_id)
+
                 stops_id: list = route.xpath("./routeProfile/stop/@refId")
                 links_id: list = route.xpath("./route/link/@refId")
                 routes_dict[route_id] = TransitRoute(id=route_id, line=line_id, links_id=links_id, stops_id=stops_id)
-                bus_stops_dict[stop_id] = full_stops_dict[stop_id]
+                for stop_id in stops_id:
+                    if stop_id in full_stops_dict:
+                        bus_stops_dict[stop_id] = full_stops_dict[stop_id]
     
-    return routes_dict, full_stops_dict
+    return routes_dict, bus_stops_dict
 
 
 

@@ -13,11 +13,11 @@ def calculate_avg_km_and_stop_in_bus_network( routes_dict: dict[str,TransitRoute
         stop_number_list.append(float(len(route.stops_id)))
         km_route = 0
         for link_id in route.links_id:
-            km_route += float(links_dict[link_id].length)
+            km_route += links_dict[link_id].length
         km_route_list.append(km_route)
     
-    mean_stop_per_route = float(np.mean(stop_number_list))
-    mean_km_per_route = float(np.mean(km_route_list))
+    mean_stop_per_route =np.mean(stop_number_list)
+    mean_km_per_route = np.mean(km_route_list)
 
     return mean_km_per_route, mean_stop_per_route
 

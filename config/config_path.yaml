@@ -16,4 +16,5 @@ data:
       person_enter_bus: "data/interim/event/person_enter_bus.arrow"
       travel_time_all_vehicle: "data/interim/event/travel_time_all_vehicle.arrow"
       bus_delay_at_facilities: "data/interim/event/bus_delay_at_facilities.arrow"
+      people_trip: "data/interim/event/people_trip.arrow"
 

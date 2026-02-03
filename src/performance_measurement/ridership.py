@@ -33,7 +33,7 @@ if __name__ == "__main__":
         output_arrow_path=person_enter_bus_path)
 
     ridership = calculte_ridership(person_enter_bus_path)
-    print(f" Rider ship là: {ridership}, trên tổng số {people_number} dân. {ridership/people_number} %" )
+    print(f" Rider ship là: {ridership}, trên tổng số {people_number} dân. {ridership/people_number*100:.2f} %" )
 
     # python -m src.performance_measurement.ridership
 

@@ -6,8 +6,8 @@ import lxml
 import lxml.etree as etree
 
 def generate_nodes_and_links_dict(network_path: str) -> (dict[str,Node], dict[str,Link]):
-    nodes_dict: dict(str,Node) = {}
-    links_dict: dict(str,Link) = {}
+    nodes_dict: dict[str,Node] = {}
+    links_dict: dict[str,Link] = {}
 
     parser = etree.XMLParser(remove_blank_text=True)
     tree = etree.parse(network_path, parser)
@@ -15,15 +15,15 @@ def generate_nodes_and_links_dict(network_path: str) -> (dict[str,Node], dict[st
 
     for link in root.xpath("//network/links/link"):
         link_id = link.xpath("@id")[0]
-        length = link.xpath("@length")[0]
+        length = float(link.xpath("@length")[0])
         from_node = link.xpath("@from")[0]
         to_node = link.xpath("@to")[0]
         links_dict[link_id] = Link(link_id, from_node, to_node, length)
 
     for node in root.xpath("//network/nodes/node"):
         node_id = node.xpath("@id")[0]
-        x = node.xpath("@x")[0]
-        y = node.xpath("@y")[0]
+        x = float(node.xpath("@x")[0])
+        y = float(node.xpath("@y")[0])
         nodes_dict[node_id] = Node(node_id, Point(x,y))
     
     return nodes_dict, links_dict
