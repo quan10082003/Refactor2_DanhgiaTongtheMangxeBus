@@ -12,7 +12,7 @@ from src.od_mask.core_class import Zone
 def generate_personTrip_df(
     events_path: str, vehtype_dict: dict, zone_finder, bus_hint_str: str, output_arrow_path: str, 
     prefix_pt_driver="pt", batch_size=50000,
-    schema_names: list = ['vehIdList','vehicleTypeList','mainMode','travelTime','startTime','actstart','actend','OZone','DZone']):
+    schema_names: list = ['vehIdList','vehicleTypeList','mainMode','travelTime','startTime','actstart','actend','OZone','DZone','xO','yO','xD','yD']):
 
     # 1. Định nghĩa schema cho Arrow (Đảm bảo khớp với các key trong dict)
     arrow_schema = pa.schema([(name, pa.string()) for name in schema_names])
@@ -41,6 +41,8 @@ def generate_personTrip_df(
                         person_trip_map[personId] = {
                             "actstart": elem.get("actType"),
                             "OZone": in_zone_id,
+                            "xO": x,
+                            "yO": y,
                             "vehIdList": [],
                             "vehicleTypeList": []
                         }
@@ -82,6 +84,10 @@ def generate_personTrip_df(
                             'actend': str(elem.get("actType")),
                             'OZone': str(person_trip_map[personId]['OZone']),
                             'DZone': str(d_zone_id),
+                            'xO': str(person_trip_map[personId]['xO']),
+                            'yO': str(person_trip_map[personId]['yO']),
+                            'xD': str(xD),
+                            'yD': str(yD)
                         })
                         # print("Đang làm việc")
 

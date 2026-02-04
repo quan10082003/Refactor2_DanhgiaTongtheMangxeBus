@@ -53,7 +53,10 @@ def map_bus_network_advanced(output_image_path: str, network_path: str, bus_rout
     # 2. Count Bus Link Frequency
     bus_link_counts = Counter()
 
-    for route in bus_route_data:
+    # Support both list and dict input  
+    routes_iter = bus_route_data.values() if isinstance(bus_route_data, dict) else bus_route_data
+
+    for route in routes_iter:
         link_list = route.links_id
         bus_link_counts.update(link_list)
     
@@ -152,7 +155,6 @@ def map_bus_network_advanced(output_image_path: str, network_path: str, bus_rout
 
     plt.savefig(output_image_path, dpi=300, bbox_inches='tight', facecolor='black')
     print(f"Saved to {output_image_path}")
-    plt.show()
 
 
 if __name__ == "__main__":
@@ -166,8 +168,10 @@ if __name__ == "__main__":
     
     network = path.paths.network
 
+    image = path.data.interim.visualize.bus_tempature_map
+
     schedule = path.paths.transit_schedule
     bus_routes_dict, _ = generate_bus_routes_and_stops_dict(transit_schedule_path=schedule, bus_route_hint_str="bus")
-    map_bus_network_advanced(output_image_path="test.png", network_path=network, bus_route_data=bus_routes_dict)
+    map_bus_network_advanced(output_image_path=image, network_path=network, bus_route_data=list(bus_routes_dict.values()))
 
-    #python -m src.visualize.bus_tempature_map
+    #py -m src.visualize.bus_tempature_map

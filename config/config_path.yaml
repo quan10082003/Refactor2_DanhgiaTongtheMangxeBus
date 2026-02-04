@@ -1,20 +1,22 @@
-folder: "scenario/baseline"
+folder: "baseline"
 
 paths:
-  network: "${folder}/network.xml"
-  plan:  "${folder}/Siouxfalls_population.xml"
-  events: "${folder}/output_events.xml"
-  trips: "${folder}/output_trips.csv"
-  legs: "${folder}/output_legs.csv"
-  plan_output: "${folder}/output_plans.xml"
-  transit_vehicle: "${folder}/output_transitVehicles.xml"
-  transit_schedule: "${folder}/output_transitSchedule.xml"
+  network: "scenario/${folder}/network.xml"
+  plan:  "scenario/${folder}/Siouxfalls_population.xml"
+  events: "scenario/${folder}/output_events.xml"
+  trips: "scenario/${folder}/output_trips.csv"
+  legs: "scenario/${folder}/output_legs.csv"
+  plan_output: "scenario/${folder}/output_plans.xml"
+  transit_vehicle: "scenario/${folder}/output_transitVehicles.xml"
+  transit_schedule: "scenario/${folder}/output_transitSchedule.xml"
 
 data:
   interim:  
     event:
-      person_enter_bus: "data/interim/event/person_enter_bus.arrow"
-      travel_time_all_vehicle: "data/interim/event/travel_time_all_vehicle.arrow"
-      bus_delay_at_facilities: "data/interim/event/bus_delay_at_facilities.arrow"
-      people_trip: "data/interim/event/people_trip.arrow"
+      person_enter_bus: "data/interim/${folder}/event/person_enter_bus.arrow"
+      travel_time_all_vehicle: "data/interim/${folder}/event/travel_time_all_vehicle.arrow"
+      bus_delay_at_facilities: "data/interim/${folder}/event/bus_delay_at_facilities.arrow"
+      people_trip: "data/interim/${folder}/event/people_trip.arrow"
+    visualize:
+      bus_tempature_map: "data/visualize/${folder}/bus_tempature_map.png"
 
