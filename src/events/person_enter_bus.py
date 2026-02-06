@@ -27,7 +27,7 @@ def generate_personEnterBus_df(events_path: str, vehtype_dict: dict, bus_hint_st
                         veh_id = elem.get("vehicle")
                         person_id = elem.get("person")
 
-                        if veh_id not in vehtype_dict or not is_public_transport_bus(vehicle_type=veh_id, bus_hint_str=bus_hint_str):
+                        if veh_id not in vehtype_dict.keys() or not is_public_transport_bus(vehicle_type=vehtype_dict[veh_id], bus_hint_str=bus_hint_str):
                             elem.clear()
                             continue
                         

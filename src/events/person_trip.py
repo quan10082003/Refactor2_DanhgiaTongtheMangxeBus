@@ -73,6 +73,9 @@ def generate_personTrip_df(
                         person_location = Point(xD, yD)
                         d_zone_id = zone_finder.find_zone_id(person_location)
 
+                        if len(person_trip_map[personId]["vehIdList"]) == 0 or len(person_trip_map[personId]["vehicleTypeList"]) == 0:
+                            person_trip_map[personId]["mainMode"] = "walk"
+                        
                         # 2. Append vào temp_data dưới dạng DICT
                         temp_data.append({
                             'vehIdList': ";".join(map(str, person_trip_map[personId]['vehIdList'])),

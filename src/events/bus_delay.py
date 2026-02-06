@@ -7,7 +7,8 @@ import lxml.etree as etree
 from src.transit.transit_vehicle import get_transit_type_dict
 from src.domain.logic import is_pt_driver, is_public_transport_bus
 
-def generate_busDelayAtFacilities_df(events_path: str, vehtype_dict: dict, bus_hint_str: str, output_arrow_path: str, schema: list = ['vehicleId', 'vehicleType', 'facility' ,  'arrDelay', 'depDelay', 'arrTime', 'depTime'], prefix_pt_driver="pt", batch_size=50000):
+def generate_busDelayAtFacilities_df(
+    events_path: str, vehtype_dict: dict, bus_hint_str: str, output_arrow_path: str, schema: list = ['vehicleId', 'vehicleType', 'facility' ,  'arrDelay', 'depDelay', 'arrTime', 'depTime'], prefix_pt_driver="pt", batch_size=50000):
     
     arrow_schema = pa.schema([(name, pa.string()) for name in schema])
     temp_bus_map ={}
@@ -26,16 +27,17 @@ def generate_busDelayAtFacilities_df(events_path: str, vehtype_dict: dict, bus_h
                         delay = elem.get("delay")
                         time = elem.get("time")
                         facility = elem.get("facility")
-                        veh_type = vehtype_dict[veh_id]
+                        
+                       
 
-                        if is_public_transport_bus(vehicle_type=veh_id, bus_hint_str=bus_hint_str)==False:
+                        if veh_id not in vehtype_dict.keys() or is_public_transport_bus(vehicle_type=vehtype_dict[veh_id], bus_hint_str=bus_hint_str)==False:
                             continue           
                         if delay is None:
                             delay = "null"   
                         else: 
                             temp_bus_map[veh_id] = {
                                 "vehicleId": str(veh_id),
-                                "vehicleType": str(veh_type),
+                                "vehicleType": str(vehtype_dict[veh_id]),
                                 "facility": facility, # Sẽ cập nhật ở event Depart
                                 "arrDelay": str(delay),
                                 "depDelay": "0.0",

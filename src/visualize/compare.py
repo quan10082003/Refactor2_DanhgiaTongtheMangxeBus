@@ -64,6 +64,7 @@ def prepare_od_metrics(df: pd.DataFrame, top_od_pairs: list = None, top_k: int =
         car_count = modes.get('car', 0)
         
         bus_share = (bus_count / total) * 100
+        car_share = (car_count / total) * 100
         
         # Times
         avg_time_bus = subset[subset['drawmode'].isin(['bus', 'pt'])]['travelTime'].mean()
@@ -76,7 +77,8 @@ def prepare_od_metrics(df: pd.DataFrame, top_od_pairs: list = None, top_k: int =
             'Car Trips': car_count,
             'Bus Share (%)': bus_share,
             'Avg Time Bus (s)': avg_time_bus,
-            'Avg Time Car (s)': avg_time_car
+            'Avg Time Car (s)': avg_time_car,
+            'Car Share (%)': car_share
         })
         
     return pd.DataFrame(metrics)
@@ -112,8 +114,10 @@ def plot_scenario_comparison(scenarios: list, output_folder: str, top_k: int = 1
     sns.set_style("whitegrid")
     
     # Figure: 3 Subplots (Bus Share, Avg Time Bus, Avg Time Car)
-    fig, axes = plt.subplots(3, 1, figsize=(14, 18))
-    fig.suptitle(f"COMPARISON ANALYSIS: TOP {top_k} OD PAIRS", fontsize=20, fontweight='bold', y=0.98)
+    # Figure: 4 Subplots - Added Bus/(Bus+Car) Share
+    fig, axes = plt.subplots(4, 1, figsize=(14, 24))
+    fig.suptitle(f"COMPARISON ANALYSIS: TOP {top_k} OD PAIRS", fontsize=20, fontweight='bold', y=0.99)
+
     
     # A. Bus Share (%)
     sns.barplot(data=final_df, x='OD', y='Bus Share (%)', hue='Scenario', ax=axes[0], palette='viridis')
@@ -123,26 +127,38 @@ def plot_scenario_comparison(scenarios: list, output_folder: str, top_k: int = 1
     for container in axes[0].containers:
         axes[0].bar_label(container, fmt='%.1f', padding=3)
 
-    # B. Avg Travel Time (Bus)
-    sns.barplot(data=final_df, x='OD', y='Avg Time Bus (s)', hue='Scenario', ax=axes[1], palette='magma')
-    axes[1].set_title("Average Travel Time: BUS (s)", fontsize=15)
-    axes[1].set_ylabel("Time (seconds)")
+    # D. Car Share (%)
+    sns.barplot(data=final_df, x='OD', y='Car Share (%)', hue='Scenario', ax=axes[1], palette='cubehelix')
+    axes[1].set_title("Car Mode Share (%) per OD Pair", fontsize=15)
+    axes[1].set_ylabel("Share (%)")
     for container in axes[1].containers:
-         axes[1].bar_label(container, fmt='%.0f', padding=3)
-    
-    # C. Avg Travel Time (Car)
-    sns.barplot(data=final_df, x='OD', y='Avg Time Car (s)', hue='Scenario', ax=axes[2], palette='coolwarm')
-    axes[2].set_title("Average Travel Time: CAR (s)", fontsize=15)
+         axes[1].bar_label(container, fmt='%.1f', padding=3)
+
+    # B. Avg Travel Time (Bus)
+    sns.barplot(data=final_df, x='OD', y='Avg Time Bus (s)', hue='Scenario', ax=axes[2], palette='magma')
+    axes[2].set_title("Average Travel Time: BUS (s)", fontsize=15)
     axes[2].set_ylabel("Time (seconds)")
     for container in axes[2].containers:
          axes[2].bar_label(container, fmt='%.0f', padding=3)
+    
+    # C. Avg Travel Time (Car)
+    sns.barplot(data=final_df, x='OD', y='Avg Time Car (s)', hue='Scenario', ax=axes[3], palette='coolwarm')
+    axes[3].set_title("Average Travel Time: CAR (s)", fontsize=15)
+    axes[3].set_ylabel("Time (seconds)")
+    for container in axes[3].containers:
+         axes[3].bar_label(container, fmt='%.0f', padding=3)
+
+
+   
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
     
     out_file = os.path.join(output_folder, "OD_Scenario_Comparison.png")
     plt.savefig(out_file, dpi=150)
     plt.close()
     print(f"Comparison plot saved to: {out_file}")
+
 
 
 if __name__ == "__main__":

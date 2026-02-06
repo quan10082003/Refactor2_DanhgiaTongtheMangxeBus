@@ -1,0 +1,29 @@
+    
+bus_route_hint_str:  "bus"
+zone:
+    cols: 20
+    rows: 20
+    radia_m: 400.0
+
+service_coveraged:
+    act_coveraged: "home"
+
+otp:
+    max_delay: 180
+    min_delay: -180
+
+travel_time:
+    before_bus_avg_time: 3247.26 #54.121 * 60
+
+productivity:
+    coefficient: 36
+
+visualize:
+    od_heatmap:
+        od_visualize_number: 25
+
+    bus_heatmap:
+        max_busroute_number_to_draw: 6
+    
+    person_trip_analysis:
+        od_visualize_number: 5

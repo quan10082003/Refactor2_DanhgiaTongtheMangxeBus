@@ -28,7 +28,7 @@ def get_offset_coords(p1, p2, offset):
     
     return [(x1 + ox, y1 + oy), (x2 + ox, y2 + oy)]
 
-def map_bus_network_advanced(output_image_path: str, network_path: str, bus_route_data: list[TransitRoute]):
+def draw_busroute_heatmap(output_image_path: str, network_path: str, bus_route_data: list[TransitRoute], max_freq_limit: int = 5):
     print("Starting Visualization V4 (Full Network Base Layer)...\n")
     
 
@@ -74,12 +74,23 @@ def map_bus_network_advanced(output_image_path: str, network_path: str, bus_rout
     offset_base_meters = 12.0 # Minimum separation for base traffic
     # Bus width logic
     def get_width(freq):
-        return 1.8 + (np.log(freq + 1) * 3) # Width scaling
+        return 1.2 + (freq * 0.8) # Linear width scaling requested by user
+    
+    # Determine total routes count for consistent scale
+    total_routes_count = len(routes_iter) if isinstance(routes_iter, list) else len(list(routes_iter))
     
     offset_multiplier = 2.0 
     cmap = plt.get_cmap('turbo')
-    max_freq = max(bus_link_counts.values()) if bus_link_counts else 1
-    norm = plt.Normalize(0, max_freq)
+    # Use max_freq_limit as the maximum value for color scale
+    # If a value > max_freq_limit, it will be clipped to max_freq_limit for color mapping (showing the 'hottest' color)
+    # User requested: scale 1..5 and then >5. So we need max_freq = 6 if limit is 5.
+    
+    if max_freq_limit is not None:
+        visual_max_val = max_freq_limit + 1
+    else:
+        visual_max_val = (total_routes_count if total_routes_count > 0 else 1)
+        
+    norm = plt.Normalize(vmin=0, vmax=visual_max_val)
 
     # 3a. Process Base Links (ALL LINKS)
     # User request: "vẽ các link của cả bản đồ mạng lưới... ở giữu background với lớp vẽ bus"
@@ -107,7 +118,10 @@ def map_bus_network_advanced(output_image_path: str, network_path: str, bus_rout
             
             bus_lines.append(p_new)
             bus_widths.append(width)
-            bus_colors.append(cmap(norm(freq)))
+            
+            # Clip frequency to visual_max_val for color mapping
+            visual_freq = min(freq, visual_max_val)
+            bus_colors.append(cmap(norm(visual_freq)))
             
             focus_x.extend([p1[0], p2[0]])
             focus_y.extend([p1[1], p2[1]])
@@ -132,10 +146,24 @@ def map_bus_network_advanced(output_image_path: str, network_path: str, bus_rout
     # Colorbar
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
+    
+    # Configure integer ticks manually
     cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
+    
+    # Generate ticks: 1, 2, ... visual_max_val
+    ticks = list(range(1, int(visual_max_val) + 1))
+    cbar.set_ticks(ticks)
+    
+    # Generate labels: "1", "2", ... ">5" (if capped)
+    labels = [str(t) for t in ticks]
+    if max_freq_limit is not None and len(labels) > max_freq_limit:
+         # The last tick represents values > max_freq_limit (which is mapped to max_freq_limit + 1)
+         labels[-1] = f">{max_freq_limit}"
+
+    cbar.ax.set_yticklabels(labels)
+    
     cbar.set_label('Bus Trips Frequency', color='white', fontsize=14)
     cbar.ax.yaxis.set_tick_params(color='white', labelcolor='white')
-    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
 
     # Focus Focus
     if focus_x and focus_y:
@@ -168,10 +196,10 @@ if __name__ == "__main__":
     
     network = path.paths.network
 
-    image = path.data.interim.visualize.bus_tempature_map
+    image = path.data.interim.visualize.bus_heatmap
 
     schedule = path.paths.transit_schedule
     bus_routes_dict, _ = generate_bus_routes_and_stops_dict(transit_schedule_path=schedule, bus_route_hint_str="bus")
-    map_bus_network_advanced(output_image_path=image, network_path=network, bus_route_data=list(bus_routes_dict.values()))
+    draw_busroute_heatmap(output_image_path=image, network_path=network, bus_route_data=list(bus_routes_dict.values()))
 
-    #py -m src.visualize.bus_tempature_map
+    #py -m src.visualize.busroute_heatmap

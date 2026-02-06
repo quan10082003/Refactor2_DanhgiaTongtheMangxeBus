@@ -90,6 +90,7 @@ def generate_travelTimeVehicle_df(events_path: str, vehtype_dict: dict, bus_hint
                             veh_types = ";".join(map(str, person_trip_map[personId]['vehicleTypeList']))
                             
                             # Đưa vào temp_data theo đúng schema
+                            
                             temp_data.append({
                                 'vehIdList': veh_ids,
                                 'vehicleTypeList': veh_types,

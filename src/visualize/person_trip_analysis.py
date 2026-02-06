@@ -126,14 +126,93 @@ def generate_final_report(data_df: pd.DataFrame, output_folder: str, scenario_na
     plt.close()
     print(f"Final report saved to {save_path}")
 
-def draw_top_5_od_map(network_path: str, schedule_path: str, zones_list: list[Zone], data_df: pd.DataFrame, output_folder: str, scenario_name: str = "", grid_info="20x20"):
+def draw_all_zones_map(network_path: str, zones_list: list[Zone], output_folder: str, scenario_name: str, nodes: dict = None, links: dict = None):
     """
-    Draws a map showing the network, bus routes, zones, and top 5 OD flows.
+    Draws a map showing the network and all defined zones.
+    """
+    print(f"Generating All Zones Map for {scenario_name}...")
+    
+    # 1. Parse Network if not provided
+    if nodes is None or links is None:
+        print(f"Parsing network: {network_path}")
+        tree = etree.parse(network_path)
+        root = tree.getroot()
+        nodes = {}
+        for node in root.xpath('//network/nodes/node'):
+            nodes[node.get('id')] = (float(node.get('x')), float(node.get('y')))
+        links = {}
+        for link in root.xpath('//network/links/link'):
+            links[link.get('id')] = (link.get('from'), link.get('to'))
+
+    # 4. Setup Plot
+    fig, ax = plt.subplots(figsize=(24, 24), facecolor='black')
+    ax.set_facecolor('black')
+    ax.set_aspect('equal')
+
+    # Z-Orders
+    Z_BASE = 1
+    Z_ZONES = 2
+    Z_TEXT = 3
+
+
+
+    # Layer 2: Zones
+    min_x, max_x = float('inf'), float('-inf')
+    min_y, max_y = float('inf'), float('-inf')
+
+    for zone in zones_list:
+        if not zone.boundary_points:
+            continue
+            
+        # Draw Polygon
+        poly = patches.Polygon([(p.x, p.y) for p in zone.boundary_points], closed=True, 
+                               facecolor='#222222', edgecolor='gray', alpha=0.4, linewidth=1.5, zorder=Z_ZONES)
+        ax.add_patch(poly)
+        
+        # Calculate bounds
+        xs = [p.x for p in zone.boundary_points]
+        ys = [p.y for p in zone.boundary_points]
+        min_x, max_x = min(min_x, min(xs)), max(max_x, max(xs))
+        min_y, max_y = min(min_y, min(ys)), max(max_y, max(ys))
+
+        # Add Label
+        centroid_x = sum(xs) / len(xs)
+        centroid_y = sum(ys) / len(ys)
+        ax.text(centroid_x, centroid_y, str(zone.id), color='white', fontsize=5, ha='center', va='top', zorder=Z_TEXT)
+
+    # Layer 1: Background Network
+    base_lines = []
+    for l_id, (u, v) in links.items():
+        if u in nodes and v in nodes:
+            base_lines.append([nodes[u], nodes[v]])
+    if base_lines:
+        lc_base = LineCollection(base_lines, colors='#bd0000', linewidths=3, alpha=1, zorder=Z_BASE)
+        ax.add_collection(lc_base)
+
+    # Set Bounds
+    if min_x != float('inf'):
+        pad_x = (max_x - min_x) * 0.1
+        pad_y = (max_y - min_y) * 0.1
+        ax.set_xlim(min_x - pad_x, max_x + pad_x)
+        ax.set_ylim(min_y - pad_y, max_y + pad_y)
+
+    ax.set_title(f"ALL ZONES MAP: {scenario_name}", fontsize=24, color='white', pad=20)
+    ax.axis('off')
+
+    save_path = os.path.join(output_folder, f"All_Zones_Map_{scenario_name}.png")
+    plt.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='black')
+    plt.close()
+    print(f"All Zones Map saved to: {save_path}")
+
+
+def draw_top_od_map(network_path: str, schedule_path: str, zones_list: list[Zone], data_df: pd.DataFrame, output_folder: str, top_n: int = 5, scenario_name: str = "", grid_info="20x20"):
+    """
+    Draws a map showing the network, bus routes, zones, and top N OD flows.
     """
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
         
-    print(f"Generating Top 5 OD Map for {scenario_name}...")
+    print(f"Generating Top {top_n} OD Map for {scenario_name}...")
     
     # 1. Parse Network
     print(f"Parsing network: {network_path}")
@@ -145,6 +224,10 @@ def draw_top_5_od_map(network_path: str, schedule_path: str, zones_list: list[Zo
     links = {}
     for link in root.xpath('//network/links/link'):
         links[link.get('id')] = (link.get('from'), link.get('to'))
+
+    # --- Call draw_all_zones_map here ---
+    draw_all_zones_map(network_path, zones_list, output_folder, scenario_name, nodes, links)
+
 
     # 2. Parse Bus Links
     bus_link_ids = set()
@@ -175,7 +258,7 @@ def draw_top_5_od_map(network_path: str, schedule_path: str, zones_list: list[Zo
     
     # Group OD
     ranking_df = valid_df[(valid_df['OZone'] != 'undefined') & (valid_df['DZone'] != 'undefined')]
-    top_od_counts = ranking_df.groupby(['OZone', 'DZone']).size().reset_index(name='count').sort_values('count', ascending=False).head(5)
+    top_od_counts = ranking_df.groupby(['OZone', 'DZone']).size().reset_index(name='count').sort_values('count', ascending=False).head(top_n)
 
     if top_od_counts.empty:
         print("No valid OD pairs found.")
@@ -295,7 +378,7 @@ def draw_top_5_od_map(network_path: str, schedule_path: str, zones_list: list[Zo
         ax.set_xlim(min_x - pad_x, max_x + pad_x)
         ax.set_ylim(min_y - pad_y, max_y + pad_y)
         
-    ax.set_title(f"TOP 5 OD FLOW: {scenario_name}", fontsize=24, color='white', pad=20)
+    ax.set_title(f"TOP {top_n} OD FLOW: {scenario_name}", fontsize=24, color='white', pad=20)
     ax.text(0.02, 0.98, f"Grid: {grid_info}\nYellow: Bus Routes\nPoints: O=Light Blue, D=Medium Pink", transform=ax.transAxes, 
             color='white', fontsize=12, fontweight='bold', va='top', 
             bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'))
@@ -323,184 +406,68 @@ def draw_top_5_od_map(network_path: str, schedule_path: str, zones_list: list[Zo
                  else:
                      cell.set_text_props(color='white')
 
-    save_path = os.path.join(output_folder, f"Top5_OD_Vis_{scenario_name}.png")
+    save_path = os.path.join(output_folder, f"Top{top_n}_OD_Vis_{scenario_name}.png")
     plt.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='black')
     plt.close()
     print(f"Map saved to: {save_path}")
 
-def draw_top_25_od_heatmap(network_path: str, schedule_path: str, zones_list: list[Zone], data_df: pd.DataFrame, output_folder: str, scenario_name: str = "", grid_info="20x20"):
+
+
+
+def analyze_person_trips(people_trip_arrow_path: str, network_path: str, schedule_path: str, zones_list: list[Zone], output_folder: str, top_od_number: int = 5, scenario_name: str = "", grid_info="20x20"):
     """
-    Draws a map showing the network, bus routes, zones, and top 25 OD flows.
-    Arrows are colored and sized based on trip volume.
+    Main function to analyze person trips, generating global reports, top OD reports, and top N OD map.
     """
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-        
-    print(f"Generating Top 25 OD Heatmap for {scenario_name}...")
-    
-    # 1. Parse Network
-    print(f"Parsing network: {network_path}")
-    tree = etree.parse(network_path)
-    root = tree.getroot()
-    nodes = {}
-    for node in root.xpath('//network/nodes/node'):
-        nodes[node.get('id')] = (float(node.get('x')), float(node.get('y')))
-    links = {}
-    for link in root.xpath('//network/links/link'):
-        links[link.get('id')] = (link.get('from'), link.get('to'))
 
-    # 2. Parse Bus Links
-    bus_link_ids = set()
-    if os.path.exists(schedule_path):
+    print(f"--- STARTING PERSON TRIP ANALYSIS for {scenario_name} ---")
+
+    # 1. Load Data
+    print(f"Loading data from {people_trip_arrow_path}...")
+    try:
+        with pa.ipc.open_stream(people_trip_arrow_path) as reader:
+            df = reader.read_all().to_pandas()
+        print(f"Loaded {len(df)} records (IPC Stream).")
+    except Exception as e_stream:
+        print(f"IPC Stream read failed: {e_stream}")
         try:
-            tree_sched = etree.parse(schedule_path)
-            root_sched = tree_sched.getroot()
-            for route in root_sched.xpath('//transitRoute'):
-                mode = route.find('transportMode')
-                if mode is not None and mode.text.strip().lower() == 'bus':
-                     r_path = route.find('route')
-                     if r_path is not None:
-                         for link_ref in r_path.xpath('link'):
-                             bus_link_ids.add(link_ref.get('refId'))
-        except Exception:
-            pass # Suppress for now
+            df = pd.read_feather(people_trip_arrow_path)
+            print(f"Loaded {len(df)} records (Feather/IPC File).")
+        except Exception as e_feather:
+            print(f"Error loading Arrow file: {e_feather}")
+            return # or raise
 
-    # 3. Data Prep
-    valid_df = data_df.copy()
-    for col in ['xO', 'yO', 'xD', 'yD']:
-        if col in valid_df.columns:
-            valid_df[col] = pd.to_numeric(valid_df[col], errors='coerce')
+    # 2. Generate Global Report
+    print("Generating Global Report...")
+    generate_final_report(df, output_folder, scenario_name=scenario_name)
+
+    # 3. Generate Top 10 OD Reports
+    print("Generating Top 10 OD Reports...")
+    valid_od = df[(df['OZone'] != 'undefined') & (df['DZone'] != 'undefined')]
+    od_counts = valid_od.groupby(['OZone', 'DZone']).size().reset_index(name='n').sort_values('n', ascending=False)
     
-    ranking_df = valid_df[(valid_df['OZone'] != 'undefined') & (valid_df['DZone'] != 'undefined')]
-    top_od_counts = ranking_df.groupby(['OZone', 'DZone']).size().reset_index(name='count').sort_values('count', ascending=False).head(25)
+    for i, (_, row) in enumerate(od_counts.head(top_od_number).iterrows(), 1):
+        o, d = row['OZone'], row['DZone']
+        od_subset = valid_od[(valid_od['OZone'] == o) & (valid_od['DZone'] == d)]
+        
+        report_filename = f"top_{i}_OD_{o}_{d}_{scenario_name}.png"
+        title = f"TOP {i} OD: {o} -> {d}"
+        print(f"  Generating report for Top {i}: {o} -> {d} ...")
+        
+        generate_final_report(
+            od_subset, 
+            output_folder, 
+            scenario_name=scenario_name, 
+            filename=report_filename,
+            title_prefix=title
+        )
 
-    if top_od_counts.empty:
-        print("No valid OD pairs found.")
-        return
-
-    # Normalize counts for visual mapping
-    max_count = top_od_counts['count'].max()
-    min_count = top_od_counts['count'].min()
-    norm = mcolors.Normalize(vmin=min_count, vmax=max_count)
-    cmap = cm.get_cmap('plasma')
-
-    # 4. Setup Plot
-    fig, ax = plt.subplots(figsize=(24, 24), facecolor='black')
-    ax.set_facecolor('black')
-    ax.set_aspect('equal')
-
-    # Z-Orders
-    Z_BASE = 1
-    Z_BUS = 2
-    Z_ZONES = 3
-    Z_ARROWS = 4
-    Z_TEXT = 5
-
-    # Layer 1: Background Network
-    base_lines = []
-    for l_id, (u, v) in links.items():
-        if u in nodes and v in nodes:
-            base_lines.append([nodes[u], nodes[v]])
-    lc_base = LineCollection(base_lines, colors='#999999', linewidths=0.5, alpha=0.5, zorder=Z_BASE)
-    ax.add_collection(lc_base)
-
-    # Layer 2: Bus Network
-    bus_lines_coords = []
-    for l_id in bus_link_ids:
-        if l_id in links:
-            u, v = links[l_id]
-            if u in nodes and v in nodes:
-                bus_lines_coords.append([nodes[u], nodes[v]])
-    if bus_lines_coords:
-        lc_bus = LineCollection(bus_lines_coords, colors='#00FFFF', linewidths=1.2, alpha=0.8, zorder=Z_BUS)
-        ax.add_collection(lc_bus)
-
-    # Zone Map
-    zone_map = {str(z.id): z for z in zones_list}
-    unique_zones = set(top_od_counts['OZone'].astype(str)).union(set(top_od_counts['DZone'].astype(str)))
+    # 4. Generate Top OD Map
+    draw_top_od_map(network_path, schedule_path, zones_list, df, output_folder, top_n=top_od_number, scenario_name=scenario_name, grid_info=grid_info)
     
-    min_x, max_x = float('inf'), float('-inf')
-    min_y, max_y = float('inf'), float('-inf')
-    
-    # Layer 3: Zones
-    for z_id in unique_zones:
-        zone = zone_map.get(z_id)
-        if not zone: continue
-        
-        # Calculate bounds
-        xs = [p.x for p in zone.boundary_points]
-        ys = [p.y for p in zone.boundary_points]
-        if xs and ys:
-            min_x, max_x = min(min_x, min(xs)), max(max_x, max(xs))
-            min_y, max_y = min(min_y, min(ys)), max(max_y, max(ys))
-            
-        poly = patches.Polygon([(p.x, p.y) for p in zone.boundary_points], closed=True, 
-                               facecolor='#1a1a1a', edgecolor='#ffffff', alpha=0.3, linewidth=1.0, zorder=Z_ZONES)
-        ax.add_patch(poly)
-        
-        # Centroid for label
-        if xs:
-            cx, cy = sum(xs)/len(xs), sum(ys)/len(ys)
-            ax.text(cx, cy, z_id, color='white', fontsize=8, ha='center', va='center', alpha=0.7, zorder=Z_TEXT)
+    print("--- PERSON TRIP ANALYSIS DONE ---")
 
-    # Layer 4: Arrows
-    for idx, (i, row) in enumerate(top_od_counts.iterrows()):
-        count = row['count']
-        o_id, d_id = str(row['OZone']), str(row['DZone'])
-        o_z, d_z = zone_map.get(o_id), zone_map.get(d_id)
-        if not o_z or not d_z: continue
-        
-        color = cmap(norm(count))
-        # Width scaling: min 2, max 10
-        width_ratio = (count - min_count) / (max_count - min_count) if max_count > min_count else 1
-        lw = 2 + (8 * width_ratio)
-        
-        ox = sum(p.x for p in o_z.boundary_points)/len(o_z.boundary_points)
-        oy = sum(p.y for p in o_z.boundary_points)/len(o_z.boundary_points)
-        dx = sum(p.x for p in d_z.boundary_points)/len(d_z.boundary_points)
-        dy = sum(p.y for p in d_z.boundary_points)/len(d_z.boundary_points)
-        
-        if o_id == d_id:
-             # Self loop
-             z_xs = [p.x for p in o_z.boundary_points]
-             z_width = max(z_xs) - min(z_xs)
-             r = z_width * 0.4 
-             theta = np.linspace(np.radians(0), np.radians(300), 50)
-             arc_xs = ox + r * np.cos(theta)
-             arc_ys = oy + r * np.sin(theta)
-             verts = list(zip(arc_xs, arc_ys))
-             p = Path(verts)
-             arrow = patches.FancyArrowPatch(path=p, arrowstyle='-|>', color=color, lw=lw, mutation_scale=20+lw, zorder=Z_ARROWS, alpha=0.9)
-             ax.add_patch(arrow)
-        else:
-            arrow = patches.FancyArrowPatch((ox, oy), (dx, dy), connectionstyle=f"arc3,rad=0.2", 
-                                            arrowstyle='-|>', color=color, lw=lw, mutation_scale=20+lw, zorder=Z_ARROWS, alpha=0.9)
-            ax.add_patch(arrow)
-
-    if min_x != float('inf'):
-        pad_x = (max_x - min_x) * 0.2
-        pad_y = (max_y - min_y) * 0.2
-        ax.set_xlim(min_x - pad_x, max_x + pad_x)
-        ax.set_ylim(min_y - pad_y, max_y + pad_y)
-
-    # Colorbar
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
-    cbar.set_label('Trip Count', color='white', size=14)
-    cbar.ax.yaxis.set_tick_params(color='white')
-    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
-
-    ax.set_title(f"TOP 25 OD FLOW HEATMAP: {scenario_name}", fontsize=24, color='white', pad=20)
-    ax.text(0.02, 0.98, f"Grid: {grid_info}\nLines: Base (Gray), Bus (Cyan)\nArrows: OD Flow (Width/Color = Volume)", transform=ax.transAxes, 
-            color='white', fontsize=12, fontweight='bold', va='top', 
-            bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'))
-    ax.axis('off')
-
-    save_path = os.path.join(output_folder, f"Top25_OD_Heatmap_{scenario_name}.png")
-    plt.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='black')
-    plt.close()
-    print(f"Heatmap saved to: {save_path}")
 
 if __name__ == "__main__":
     from src.data.load_config import load_config
@@ -514,46 +481,15 @@ if __name__ == "__main__":
     path = load_config(r"config/config_path.yaml")
     
     # Paths
-    people_trip_arrow_path = path.data.interim.event.people_trip # data/interim/baseline/event/people_trip.arrow
+    people_trip_arrow_path = path.data.interim.event.people_trip 
     network_path = path.paths.network
     schedule_path = path.paths.transit_schedule
     plan_path = path.paths.plan
     
-    # We derive output folder from the input arrow file location or config
-    # The Arrow file is in data/interim/baseline/event/people_trip.arrow
-    # We want output in data/visualize/baseline/...
-    # Let's extract 'baseline' from config or path
-    # Using config folder value would be cleanest if available, but load_config output depends on dict structure
-    # 'path.folder' might not be available directly if it was substituted.
-    # However, we can construct the output path relative to project root.
-    
-    # Assuming 'baseline' is the folder.
-    # Let's try to infer scenario name from the arrow path or config
     scenario_name = "BASELINE"
-    
-    # Hardcoded based on user request/config
     output_visualize_folder = r"data/visualize/baseline/person_trip_analysis"
     
-    print("--- STARTING ANALYSIS ---")
-
-    # 1. Load Data (Arrow)
-    print(f"Loading data from {people_trip_arrow_path}...")
-    try:
-        # Try reading as IPC Stream first (generated by ipc.new_stream)
-        with pa.ipc.open_stream(people_trip_arrow_path) as reader:
-            df = reader.read_all().to_pandas()
-        print(f"Loaded {len(df)} records (IPC Stream).")
-    except Exception as e_stream:
-        print(f"IPC Stream read failed: {e_stream}")
-        try:
-            # Fallback to Feather/IPC File format
-            df = pd.read_feather(people_trip_arrow_path)
-            print(f"Loaded {len(df)} records (Feather/IPC File).")
-        except Exception as e_feather:
-            print(f"Error loading Arrow file: {e_feather}")
-            raise e_feather
-
-    # 2. Generate Zones (Replicate logic from src/events/person_trip.py)
+    # Generate Zones Locally for testing
     print("Generating Zones...")
     nodes_dict, links_dict = generate_nodes_and_links_dict(network_path)
     min_p_network, max_p_network = get_boundary_nodes_of_network(nodes_dict)
@@ -564,43 +500,17 @@ if __name__ == "__main__":
     min_p = Point(min(min_p_network.x, min_p_plan.x), min(min_p_network.y, min_p_plan.y))
     max_p = Point(max(max_p_network.x, max_p_plan.x), max(max_p_network.y, max_p_plan.y))
 
-    # Grid size from person_trip.py was 20x20
     ROWS, COLS = 20, 20
     zone_gen = ZoneGeneratorByGrid(max_p=max_p, min_p=min_p, rows=ROWS, cols=COLS)
     zones_list = zone_gen.generate()
-    print(f"Generated {len(zones_list)} zones ({ROWS}x{COLS}).")
 
-    # 3. Generate Charts (Global)
-    print("Generating Global Report...")
-    generate_final_report(df, output_visualize_folder, scenario_name=scenario_name)
-
-    # 3b. Generate Charts for Top 10 OD
-    print("Generating Top 10 OD Reports...")
-    # Filter valid OD
-    valid_od = df[(df['OZone'] != 'undefined') & (df['DZone'] != 'undefined')]
-    od_counts = valid_od.groupby(['OZone', 'DZone']).size().reset_index(name='n').sort_values('n', ascending=False)
-    
-    for i, (_, row) in enumerate(od_counts.head(10).iterrows(), 1):
-        o, d = row['OZone'], row['DZone']
-        od_subset = valid_od[(valid_od['OZone'] == o) & (valid_od['DZone'] == d)]
-        
-        report_filename = f"top_{i}_OD_{o}_{d}_{scenario_name}.png"
-        title = f"TOP {i} OD: {o} -> {d}"
-        print(f"  Generating report for Top {i}: {o} -> {d} ...")
-        
-        generate_final_report(
-            od_subset, 
-            output_visualize_folder, 
-            scenario_name=scenario_name, 
-            filename=report_filename,
-            title_prefix=title
-        )
-
-    # 4. Generate Map
-    # 4. Generate Maps
-    draw_top_5_od_map(network_path, schedule_path, zones_list, df, output_visualize_folder, scenario_name=scenario_name, grid_info=f"{ROWS}x{COLS}")
-    draw_top_25_od_heatmap(network_path, schedule_path, zones_list, df, output_visualize_folder, scenario_name=scenario_name, grid_info=f"{ROWS}x{COLS}")
-
-    print("--- DONE ---")
-    
-    # python -m src.visualize.person_trip_analysis
+    analyze_person_trips(
+        people_trip_arrow_path=people_trip_arrow_path,
+        network_path=network_path,
+        schedule_path=schedule_path,
+        zones_list=zones_list,
+        output_folder=output_visualize_folder,
+        scenario_name=scenario_name,
+        grid_info=f"{ROWS}x{COLS}"
+    )
+    #python -m src.visualize.person_trip_analysis

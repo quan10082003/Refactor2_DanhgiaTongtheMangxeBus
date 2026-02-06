@@ -1,22 +1,35 @@
-folder: "baseline"
+scenario: "after"
+scenario_list: ["baseline", "after"]
 
 paths:
-  network: "scenario/${folder}/network.xml"
-  plan:  "scenario/${folder}/Siouxfalls_population.xml"
-  events: "scenario/${folder}/output_events.xml"
-  trips: "scenario/${folder}/output_trips.csv"
-  legs: "scenario/${folder}/output_legs.csv"
-  plan_output: "scenario/${folder}/output_plans.xml"
-  transit_vehicle: "scenario/${folder}/output_transitVehicles.xml"
-  transit_schedule: "scenario/${folder}/output_transitSchedule.xml"
+  network: "scenario/${scenario}/network.xml"
+  plan:  "scenario/${scenario}/plans_scale0.375true.xml"
+  events: "scenario/${scenario}/output_events.xml"
+  trips: "scenario/${scenario}/output_trips.csv"
+  legs: "scenario/${scenario}/output_legs.csv"
+  plan_output: "scenario/${scenario}/output_plans.xml"
+  transit_vehicle: "scenario/${scenario}/output_transitVehicles.xml"
+  transit_schedule: "scenario/${scenario}/output_transitSchedule.xml"
 
 data:
-  interim:  
+  interim: 
     event:
-      person_enter_bus: "data/interim/${folder}/event/person_enter_bus.arrow"
-      travel_time_all_vehicle: "data/interim/${folder}/event/travel_time_all_vehicle.arrow"
-      bus_delay_at_facilities: "data/interim/${folder}/event/bus_delay_at_facilities.arrow"
-      people_trip: "data/interim/${folder}/event/people_trip.arrow"
+      person_enter_bus: "data/interim/${scenario}/event/person_enter_bus.arrow"
+      travel_time_all_vehicle: "data/interim/${scenario}/event/travel_time_all_vehicle.arrow"
+      bus_delay_at_facilities: "data/interim/${scenario}/event/bus_delay_at_facilities.arrow"
+      people_trip: "data/interim/${scenario}/event/people_trip.arrow"
+      bus_trip: "data/interim/${scenario}/event/bus_trip.arrow"
     visualize:
-      bus_tempature_map: "data/visualize/${folder}/bus_tempature_map.png"
+      bus_heatmap: "data/visualize/${scenario}/bus_od_heatmap.png"
+      od_heatmap: "data/visualize/${scenario}/od_heatmap.png"
+      person_trip_analysis: "data/visualize/${scenario}/person_trip_analysis"
+    
+  processed:
+    kpi_result: "data/processed/${scenario}/kpi_result.txt"
+    all_kpi_result: "data/processed/all_kpi_result.txt"
+
+  comparasion:
+    comparison_folder : "data/visualize/comparison"
+    
+
 
