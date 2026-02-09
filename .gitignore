@@ -1,5 +1,7 @@
 .venv
 __pycache__
-data
+data/interim
+data/processed
+data/visualize
 scenario
 scenario.rar

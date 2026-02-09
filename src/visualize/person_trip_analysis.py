@@ -208,6 +208,7 @@ def draw_all_zones_map(network_path: str, zones_list: list[Zone], output_folder:
 def draw_top_od_map(network_path: str, schedule_path: str, zones_list: list[Zone], data_df: pd.DataFrame, output_folder: str, top_n: int = 5, scenario_name: str = "", grid_info="20x20"):
     """
     Draws a map showing the network, bus routes, zones, and top N OD flows.
+    data_Df là dataframe chứa thông tin về các chuyến đi của người dân như people_trip.arrow
     """
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)

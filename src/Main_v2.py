@@ -182,50 +182,50 @@ def run_scenario(scenario_name: str, path: dict, param: dict):
     
     #write kpi result
     with open(kpi_result, "w", encoding="utf-8") as f:
-        f.write(f"--- BÁO CÁO KẾT QUẢ KPI MÔ PHỎNG (Scenario: {scenario_name}) ---\n")
+        f.write(f"\n--- BÁO CÁO KẾT QUẢ KPI MÔ PHỎNG (Scenario: {scenario_name}) ---\n")
         f.write(f"1. THÔNG SỐ MẠNG LƯỚI XE BUÝT:\n")
         f.write(f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n")
-        f.write(f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n")
+        f.write(f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n\n")
         f.write(f"2. HIỆU SUẤT THỜI GIAN (TRAVEL TIME):\n")
         f.write(f"   - Tỉ lệ Bus trước/sau: {bus_travel_time_ratio_KPI:.4f}\n")
         f.write(f"   - Tỉ lệ Bus/Car: {travel_time_ratio_KPI:.4f}\n\n")
         f.write(f"   - Bus (Trung bình): {average_bus_travel_time:.2f} s (trong {bus_trip} chuyến)\n")
-        f.write(f"   - Car (Trung bình): {average_car_travel_time:.2f} s (trong {car_trip} chuyến)\n")
+        f.write(f"   - Car (Trung bình): {average_car_travel_time:.2f} s (trong {car_trip} chuyến)\n\n")
         f.write(f"3. ĐỘ BAO PHỦ & NHU CẦU PHỤC VỤ:\n")
         ridership_percent = (ridership/people_number*100) if people_number > 0 else 0
         f.write(f"   - Ridership: {ridership} người ({ridership_percent:.2f}% dân số)\n")
         f.write(f"   - Service Coverage: {service_coverage/people_number*100:.2f}%\n")
-        f.write(f"   - Vùng phục vụ ({radia_m}m): {service_coverage} / {people_number} dân\n")
+        f.write(f"   - Vùng phục vụ ({radia_m}m): {service_coverage} / {people_number} dân\n\n")
         f.write(f"4. ĐỘ ĐÚNG GIỜ (ON-TIME PERFORMANCE):\n")
         f.write(f"   - OTP: {otp_percent:.2f}%\n")
-        f.write(f"   - On-time arrivals: {ontime} / {total} chuyến\n")
+        f.write(f"   - On-time arrivals: {ontime} / {total} chuyến\n\n")
         f.write(f"5. HIỆU SUẤT XE BUÝT:\n")
         f.write(f"   - Productivity Index: {prod_index:.6f}\n")
         f.write(f"   - Efficiency Index:   {eff_index:.6f}\n")
         f.write(f"   - Effective Dist Ratio: {dist_ratio:.4f}\n\n")
     
     with open(all_kpi_result, "a", encoding="utf-8") as f:
-        f.write(f"--- BÁO CÁO KẾT QUẢ KPI MÔ PHỎNG (Scenario: {scenario_name}) ---\n")
+        f.write(f"\n--- BÁO CÁO KẾT QUẢ KPI MÔ PHỎNG (Scenario: {scenario_name}) ---\n")
         f.write(f"1. THÔNG SỐ MẠNG LƯỚI XE BUÝT:\n")
         f.write(f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n")
-        f.write(f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n")
+        f.write(f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n\n")
         f.write(f"2. HIỆU SUẤT THỜI GIAN (TRAVEL TIME):\n")
         f.write(f"   - Tỉ lệ Bus trước/sau: {bus_travel_time_ratio_KPI:.4f}\n")
         f.write(f"   - Tỉ lệ Bus/Car: {travel_time_ratio_KPI:.4f}\n\n")
         f.write(f"   - Bus (Trung bình): {average_bus_travel_time:.2f} s (trong {bus_trip} chuyến)\n")
-        f.write(f"   - Car (Trung bình): {average_car_travel_time:.2f} s (trong {car_trip} chuyến)\n")
+        f.write(f"   - Car (Trung bình): {average_car_travel_time:.2f} s (trong {car_trip} chuyến)\n\n")
         f.write(f"3. ĐỘ BAO PHỦ & NHU CẦU PHỤC VỤ:\n")
         ridership_percent = (ridership/people_number*100) if people_number > 0 else 0
         f.write(f"   - Ridership: {ridership} người ({ridership_percent:.2f}% dân số)\n")
         f.write(f"   - Service Coverage: {service_coverage/people_number*100:.2f}%\n")
-        f.write(f"   - Vùng phục vụ ({radia_m}m): {service_coverage} / {people_number} dân\n")
+        f.write(f"   - Vùng phục vụ ({radia_m}m): {service_coverage} / {people_number} dân\n\n")
         f.write(f"4. ĐỘ ĐÚNG GIỜ (ON-TIME PERFORMANCE):\n")
         f.write(f"   - OTP: {otp_percent:.2f}%\n")
-        f.write(f"   - On-time arrivals: {ontime} / {total} chuyến\n")
+        f.write(f"   - On-time arrivals: {ontime} / {total} chuyến\n\n")
         f.write(f"5. HIỆU SUẤT XE BUÝT:\n")
         f.write(f"   - Productivity Index: {prod_index:.6f}\n")
         f.write(f"   - Efficiency Index:   {eff_index:.6f}\n")
-        f.write(f"   - Effective Dist Ratio: {dist_ratio:.4f}\n")
+        f.write(f"   - Effective Dist Ratio: {dist_ratio:.4f}\n\n")
 
     print(f"[*] Đã xuất kết quả KPI ra file: {kpi_result}")
 
@@ -242,6 +242,12 @@ def main():
     
     scenario_list = base_path_config.scenario_list
     print(f"Scenarios to run: {scenario_list}")
+    all_kpi_result = base_path_config.data.processed.all_kpi_result
+    create_folders(all_kpi_result)
+    with open(all_kpi_result, "w", encoding="utf-8") as f:
+        f.write(f"")
+
+
     
     scenario_results = []
     
