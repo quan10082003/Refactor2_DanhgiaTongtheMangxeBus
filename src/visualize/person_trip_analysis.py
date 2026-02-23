@@ -14,8 +14,9 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
 from src.od_mask.core_class import Zone
+from src.domain.logic import is_public_transport_bus
 
-def generate_final_report(data_df: pd.DataFrame, output_folder: str, scenario_name: str = "", filename: str = "00_global_summary.png", title_prefix: str = "BÁO CÁO TỔNG QUAN HỆ THỐNG"):
+def generate_final_report(data_df: pd.DataFrame, output_folder: str, bus_hint_str: str = "bus", scenario_name: str = "", filename: str = "00_global_summary.png", title_prefix: str = "BÁO CÁO TỔNG QUAN HỆ THỐNG"):
     """
     Generates a combined report with multiple charts (Pie, Bar, Boxplot, Hist, Line)
     analyzing mode share, travel times, etc.
@@ -35,19 +36,18 @@ def generate_final_report(data_df: pd.DataFrame, output_folder: str, scenario_na
     if 'travelTime' in subset.columns:
         subset['travelTime'] = pd.to_numeric(subset['travelTime'], errors='coerce')
 
-    # Mapping 'mainMode' or 'vehicleTypeList' to 'drawmode' for consistency with notebook logic
-    # The Arrow file has 'mainMode'. Let's use that.
-    # Note: Notebook uses 'drawmode'. We need to derive it if not present.
-    # Logic from notebook/context implies 'drawmode' distinguishes car vs bus.
-    # In person_trip.py, 'mainMode' is captured.
-    # Let's assume 'mainMode' is relevant. Or 'vehicleTypeList'.
-    # If 'drawmode' is not in columns, create it.
+    # Classify drawmode based on vehicleTypeList to distinguish bus from other PT
     if 'drawmode' not in subset.columns:
-        # Simple heuristic: if 'bus' string in vehicleTypeList, maybe it's bus? 
-        # But 'mainMode' from MATSim events (departure) is usually 'car', 'pt', 'walk'.
-        # If 'pt', it involves bus.
-        # Let's map 'mainMode' to 'drawmode'.
-        subset['drawmode'] = subset['mainMode'] 
+        def _classify_mode(row):
+            vehicle_types = str(row.get('vehicleTypeList', ''))
+            main_mode = str(row.get('mainMode', ''))
+            if is_public_transport_bus(vehicle_types, bus_hint_str):
+                return 'bus'
+            elif main_mode == 'pt':
+                return 'pt_not_bus'
+            else:
+                return main_mode  # car, walk, etc.
+        subset['drawmode'] = subset.apply(_classify_mode, axis=1)
 
     # UPDATE: Change layout to 3x2 to include Time analysis (Item C)
     fig, axes = plt.subplots(3, 2, figsize=(18, 20)) 
@@ -415,7 +415,7 @@ def draw_top_od_map(network_path: str, schedule_path: str, zones_list: list[Zone
 
 
 
-def analyze_person_trips(people_trip_arrow_path: str, network_path: str, schedule_path: str, zones_list: list[Zone], output_folder: str, top_od_number: int = 5, scenario_name: str = "", grid_info="20x20"):
+def analyze_person_trips(people_trip_arrow_path: str, network_path: str, schedule_path: str, zones_list: list[Zone], output_folder: str, bus_hint_str: str = "bus", top_od_number: int = 5, scenario_name: str = "", grid_info="20x20"):
     """
     Main function to analyze person trips, generating global reports, top OD reports, and top N OD map.
     """
@@ -441,7 +441,7 @@ def analyze_person_trips(people_trip_arrow_path: str, network_path: str, schedul
 
     # 2. Generate Global Report
     print("Generating Global Report...")
-    generate_final_report(df, output_folder, scenario_name=scenario_name)
+    generate_final_report(df, output_folder, bus_hint_str=bus_hint_str, scenario_name=scenario_name)
 
     # 3. Generate Top 10 OD Reports
     print("Generating Top 10 OD Reports...")
@@ -459,6 +459,7 @@ def analyze_person_trips(people_trip_arrow_path: str, network_path: str, schedul
         generate_final_report(
             od_subset, 
             output_folder, 
+            bus_hint_str=bus_hint_str,
             scenario_name=scenario_name, 
             filename=report_filename,
             title_prefix=title
@@ -511,6 +512,7 @@ if __name__ == "__main__":
         schedule_path=schedule_path,
         zones_list=zones_list,
         output_folder=output_visualize_folder,
+        bus_hint_str="bus",
         scenario_name=scenario_name,
         grid_info=f"{ROWS}x{COLS}"
     )

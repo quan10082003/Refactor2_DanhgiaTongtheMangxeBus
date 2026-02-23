@@ -165,6 +165,7 @@ def run_scenario(scenario_name: str, path: dict, param: dict):
         schedule_path=schedule,
         zones_list=zone_list,
         output_folder=person_trip_analysis_output_folder,
+        bus_hint_str=bus_route_hint_str,
         top_od_number=top_od_number,
         scenario_name=scenario_name,
         grid_info=f"{rows}x{cols}"
@@ -181,51 +182,34 @@ def run_scenario(scenario_name: str, path: dict, param: dict):
     del bus_delay_at_facilities
     
     #write kpi result
+    ridership_percent = (ridership / people_number * 100) if people_number > 0 else 0
+    service_coverage_percent = (service_coverage / people_number * 100) if people_number > 0 else 0
+    service_hours = bus_metrics['service_hours']
+    effective_km = bus_metrics['effective_km']
+    total_km = bus_metrics['total_km']
+
+    kpi_text = (
+        f"---------------- Scenario: {scenario_name} ----------------------\n"
+        f"   - Ridership: {ridership}/{people_number} - {ridership_percent:.2f}%\n"
+        f"   - Service Coverage: {service_coverage}/{people_number} - {service_coverage_percent:.2f}%\n"
+        f"   - OTP: {otp_percent:.2f}% - {ontime}/{total}\n"
+        f"   - Bus (Trung bình): {average_bus_travel_time:.2f} s - {bus_trip} trips\n"
+        f"   - Car (Trung bình): {average_car_travel_time:.2f} s - {car_trip} trips\n"
+        f"   - Bus/Car: {travel_time_ratio_KPI:.4f}\n"
+        f"   - Bus After/Before: {bus_travel_time_ratio_KPI:.4f}\n"
+        f"   - Productivity Index: {prod_index:.6f} - {service_hours} service hour\n"
+        f"   - Efficiency Index:   {eff_index:.6f} - {effective_km} effective_km\n"
+        f"   - Effective Dist Ratio: {dist_ratio:.4f} - {total_km} total_km\n"
+        f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n"
+        f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n"
+    )
+
     with open(kpi_result, "w", encoding="utf-8") as f:
-        f.write(f"\n--- BÁO CÁO KẾT QUẢ KPI MÔ PHỎNG (Scenario: {scenario_name}) ---\n")
-        f.write(f"1. THÔNG SỐ MẠNG LƯỚI XE BUÝT:\n")
-        f.write(f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n")
-        f.write(f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n\n")
-        f.write(f"2. HIỆU SUẤT THỜI GIAN (TRAVEL TIME):\n")
-        f.write(f"   - Tỉ lệ Bus trước/sau: {bus_travel_time_ratio_KPI:.4f}\n")
-        f.write(f"   - Tỉ lệ Bus/Car: {travel_time_ratio_KPI:.4f}\n\n")
-        f.write(f"   - Bus (Trung bình): {average_bus_travel_time:.2f} s (trong {bus_trip} chuyến)\n")
-        f.write(f"   - Car (Trung bình): {average_car_travel_time:.2f} s (trong {car_trip} chuyến)\n\n")
-        f.write(f"3. ĐỘ BAO PHỦ & NHU CẦU PHỤC VỤ:\n")
-        ridership_percent = (ridership/people_number*100) if people_number > 0 else 0
-        f.write(f"   - Ridership: {ridership} người ({ridership_percent:.2f}% dân số)\n")
-        f.write(f"   - Service Coverage: {service_coverage/people_number*100:.2f}%\n")
-        f.write(f"   - Vùng phục vụ ({radia_m}m): {service_coverage} / {people_number} dân\n\n")
-        f.write(f"4. ĐỘ ĐÚNG GIỜ (ON-TIME PERFORMANCE):\n")
-        f.write(f"   - OTP: {otp_percent:.2f}%\n")
-        f.write(f"   - On-time arrivals: {ontime} / {total} chuyến\n\n")
-        f.write(f"5. HIỆU SUẤT XE BUÝT:\n")
-        f.write(f"   - Productivity Index: {prod_index:.6f}\n")
-        f.write(f"   - Efficiency Index:   {eff_index:.6f}\n")
-        f.write(f"   - Effective Dist Ratio: {dist_ratio:.4f}\n\n")
-    
+        f.write(kpi_text)
+
     with open(all_kpi_result, "a", encoding="utf-8") as f:
-        f.write(f"\n--- BÁO CÁO KẾT QUẢ KPI MÔ PHỎNG (Scenario: {scenario_name}) ---\n")
-        f.write(f"1. THÔNG SỐ MẠNG LƯỚI XE BUÝT:\n")
-        f.write(f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n")
-        f.write(f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n\n")
-        f.write(f"2. HIỆU SUẤT THỜI GIAN (TRAVEL TIME):\n")
-        f.write(f"   - Tỉ lệ Bus trước/sau: {bus_travel_time_ratio_KPI:.4f}\n")
-        f.write(f"   - Tỉ lệ Bus/Car: {travel_time_ratio_KPI:.4f}\n\n")
-        f.write(f"   - Bus (Trung bình): {average_bus_travel_time:.2f} s (trong {bus_trip} chuyến)\n")
-        f.write(f"   - Car (Trung bình): {average_car_travel_time:.2f} s (trong {car_trip} chuyến)\n\n")
-        f.write(f"3. ĐỘ BAO PHỦ & NHU CẦU PHỤC VỤ:\n")
-        ridership_percent = (ridership/people_number*100) if people_number > 0 else 0
-        f.write(f"   - Ridership: {ridership} người ({ridership_percent:.2f}% dân số)\n")
-        f.write(f"   - Service Coverage: {service_coverage/people_number*100:.2f}%\n")
-        f.write(f"   - Vùng phục vụ ({radia_m}m): {service_coverage} / {people_number} dân\n\n")
-        f.write(f"4. ĐỘ ĐÚNG GIỜ (ON-TIME PERFORMANCE):\n")
-        f.write(f"   - OTP: {otp_percent:.2f}%\n")
-        f.write(f"   - On-time arrivals: {ontime} / {total} chuyến\n\n")
-        f.write(f"5. HIỆU SUẤT XE BUÝT:\n")
-        f.write(f"   - Productivity Index: {prod_index:.6f}\n")
-        f.write(f"   - Efficiency Index:   {eff_index:.6f}\n")
-        f.write(f"   - Effective Dist Ratio: {dist_ratio:.4f}\n\n")
+        f.write(kpi_text)
+        f.write(f"\n\n")
 
     print(f"[*] Đã xuất kết quả KPI ra file: {kpi_result}")
 

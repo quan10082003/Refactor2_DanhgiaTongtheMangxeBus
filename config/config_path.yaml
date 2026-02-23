@@ -3,7 +3,7 @@ scenario_list: ["baseline", "after"]
 
 paths:
   network: "scenario/${scenario}/network.xml"
-  plan:  "scenario/${scenario}/plans_scale0.375true.xml"
+  plan:  "scenario/${scenario}/plan.xml"
   events: "scenario/${scenario}/output_events.xml"
   trips: "scenario/${scenario}/output_trips.csv"
   legs: "scenario/${scenario}/output_legs.csv"
