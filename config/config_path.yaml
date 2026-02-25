@@ -27,6 +27,9 @@ data:
   processed:
     kpi_result: "data/processed/${scenario}/kpi_result.txt"
     all_kpi_result: "data/processed/all_kpi_result.txt"
+    all_kpi_csv: "data/processed/all_kpi_result.csv"
+    all_kpi_comparison_string_csv: "data/processed/all_kpi_comparison_string.csv"
+    all_kpi_comparison_percent_csv: "data/processed/all_kpi_comparison_percent.csv"
 
   comparasion:
     comparison_folder : "data/visualize/comparison"

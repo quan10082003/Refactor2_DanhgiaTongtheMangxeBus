@@ -1,0 +1,20 @@
+    kpi_text = (
+        f"---------------- Scenario: {scenario_name} ----------------------\n"
+        f"   - Ridership: {ridership}/{people_number} - {ridership_percent:.2f}%\n"
+        f"   - Service Coverage: {service_coverage}/{people_number} - {service_coverage_percent:.2f}%\n"
+        f"   - OTP: {otp_percent:.2f}% - {ontime}/{total}\n"
+        f"   - Bus (Trung bình): {average_bus_travel_time:.2f} s - {bus_trip} trips\n"
+        f"   - Car (Trung bình): {average_car_travel_time:.2f} s - {car_trip} trips\n"
+        f"   - Bus/Car: {travel_time_ratio_KPI:.4f}\n"
+        f"   - Bus After/Before: {bus_travel_time_ratio_KPI:.4f}\n"
+        f"   - Productivity Index: {ridership/service_hours} ({prod_index:.6f}) - {service_hours} service hour\n"
+        f"   - Efficiency Index:   {ridership/total_km} ({eff_index:.6f}) - {total_km} total_km\n"
+        f"   - Effective Dist Ratio: {dist_ratio:.4f} - {effective_km}/{total_km}\n"
+        f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n"
+        f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n"
+    )
+
+    kpi_text = (
+        f"Scenario,          Ridership,     Service_coverage,   OTP,            Bus_avg_time,                       Bus_trips,                   Car_avg_time,                   Car_trips,                   Total_km_bus_run,           Effective_km_bus_run,           Total_hours_bus_run,          Productivity_index,           Efficiency_index,           Effective_dist_ratio,           Mean_stop_per_route,          Mean_km_per_route\n"
+        f"{scenario_name},   {ridership},   {service_coverage}, {otp_percent},  {average_bus_travel_time},          {bus_trip},                  {average_car_travel_time},      {car_trip},                  {total_km},                 {effective_km},                 {service_hours},              {ridership/service_hours},    {ridership/total_km},       {effective_km/total_km},        {mean_stop_per_route},        {mean_km_per_route}\n"
+    )

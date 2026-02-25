@@ -90,34 +90,34 @@ def run_scenario(scenario_name: str, path: dict, param: dict):
     zone_list = zone_gen.generate()
     
     #generate imterim arrrow file
-    generate_busDelayAtFacilities_df(
-        events_path=path.paths.events, 
-        vehtype_dict=pt_type_dict, 
-        bus_hint_str=bus_route_hint_str, 
-        output_arrow_path=bus_delay_at_facilities)
-    generate_personEnterBus_df(
-        events_path=path.paths.events, 
-        vehtype_dict=pt_type_dict, 
-        bus_hint_str=bus_route_hint_str, 
-        output_arrow_path=person_enter_bus)
-    generate_travelTimeVehicle_df(
-        events_path=path.paths.events, 
-        vehtype_dict=pt_type_dict, 
-        bus_hint_str=bus_route_hint_str, 
-        output_arrow_path=travel_time_all_vehicle)
-    generate_personTrip_df(
-        events_path=path.paths.events, 
-        vehtype_dict=pt_type_dict, 
-        zone_finder=zone_gen,
-        bus_hint_str=bus_route_hint_str, 
-        output_arrow_path=people_trip)
-    generate_busTrip_df(
-        events_path=path.paths.events,
-        links_dict=links_dict,
-        bus_hint_str=bus_route_hint_str,
-        vehtype_dict=pt_type_dict,
-        output_arrow_path=bus_trip_path
-    )
+    # generate_busDelayAtFacilities_df(
+    #     events_path=path.paths.events, 
+    #     vehtype_dict=pt_type_dict, 
+    #     bus_hint_str=bus_route_hint_str, 
+    #     output_arrow_path=bus_delay_at_facilities)
+    # generate_personEnterBus_df(
+    #     events_path=path.paths.events, 
+    #     vehtype_dict=pt_type_dict, 
+    #     bus_hint_str=bus_route_hint_str, 
+    #     output_arrow_path=person_enter_bus)
+    # generate_travelTimeVehicle_df(
+    #     events_path=path.paths.events, 
+    #     vehtype_dict=pt_type_dict, 
+    #     bus_hint_str=bus_route_hint_str, 
+    #     output_arrow_path=travel_time_all_vehicle)
+    # generate_personTrip_df(
+    #     events_path=path.paths.events, 
+    #     vehtype_dict=pt_type_dict, 
+    #     zone_finder=zone_gen,
+    #     bus_hint_str=bus_route_hint_str, 
+    #     output_arrow_path=people_trip)
+    # generate_busTrip_df(
+    #     events_path=path.paths.events,
+    #     links_dict=links_dict,
+    #     bus_hint_str=bus_route_hint_str,
+    #     vehtype_dict=pt_type_dict,
+    #     output_arrow_path=bus_trip_path
+    # )
 
     #calculate performance measurement
     mean_km_per_route, mean_stop_per_route = calculate_avg_km_and_stop_in_bus_network(routes_dict=bus_route_dict, links_dict=links_dict)
@@ -197,9 +197,9 @@ def run_scenario(scenario_name: str, path: dict, param: dict):
         f"   - Car (Trung bình): {average_car_travel_time:.2f} s - {car_trip} trips\n"
         f"   - Bus/Car: {travel_time_ratio_KPI:.4f}\n"
         f"   - Bus After/Before: {bus_travel_time_ratio_KPI:.4f}\n"
-        f"   - Productivity Index: {prod_index:.6f} - {service_hours} service hour\n"
-        f"   - Efficiency Index:   {eff_index:.6f} - {effective_km} effective_km\n"
-        f"   - Effective Dist Ratio: {dist_ratio:.4f} - {total_km} total_km\n"
+        f"   - Productivity Index: {ridership/service_hours} ({prod_index:.6f}) - {service_hours} service hour\n"
+        f"   - Efficiency Index:   {ridership/total_km} ({eff_index:.6f}) - {total_km} total_km\n"
+        f"   - Effective Dist Ratio: {dist_ratio:.4f} - {effective_km}/{total_km}\n"
         f"   - Số trạm dừng trung bình/tuyến: {mean_stop_per_route:.2f} trạm\n"
         f"   - Chiều dài trung bình/tuyến: {mean_km_per_route/1000:.2f} km\n"
     )
@@ -216,7 +216,31 @@ def run_scenario(scenario_name: str, path: dict, param: dict):
     return {
         "scenario": scenario_name,
         "people_trip_path": people_trip,
-        "output_folder": path.data.interim.visualize.od_heatmap # Folder for comparison outputs? Or store parent folder
+        "output_folder": path.data.interim.visualize.od_heatmap, # Folder for comparison outputs? Or store parent folder
+        "kpi_data": {
+            "Ridership(person)": ridership,
+            "Ridership_percent(%)": ridership_percent,
+            "Service_coverage(person)": service_coverage,
+            "Service_coverage_percent(%)": service_coverage_percent,
+            "OTP(%)": round(otp_percent,3),
+            "Bus_avg_time(s)": round(average_bus_travel_time, 3),
+            "Bus_trips(trips)": bus_trip,
+            "Car_avg_time(s)": round(average_car_travel_time, 3),
+            "Car_trips(trips)": car_trip,
+            "Total_km_bus_run(km)": round(total_km, 3),
+            "Effective_km_bus_run(km)": round(effective_km, 3),
+            "Efficiency_index(person/km)": round(ridership/total_km, 3) if total_km > 0 else 0,
+            "Efficiency_runtime_kpi": round(eff_index, 3),
+            "Effective_dist_ratio": round(effective_km/total_km, 3) if total_km > 0 else 0,
+            "Total_hours_bus_run(h)": round(service_hours, 3),
+            "Productivity_index(person/h)": round(ridership/service_hours, 3) if service_hours > 0 else 0,
+            "Productivity_runtime_kpi": round(prod_index, 3),
+            "Total_stop(stop)": total,
+            "Ontime_stop(stop)": ontime,
+            "Total_people(person)": people_number,
+            "Mean_stop_per_route(stop/route)": round(mean_stop_per_route, 3),
+            "Mean_km_per_route(km/route)": round(mean_km_per_route/1000, 3)
+        }
     }
 
 def main():
@@ -227,12 +251,19 @@ def main():
     scenario_list = base_path_config.scenario_list
     print(f"Scenarios to run: {scenario_list}")
     all_kpi_result = base_path_config.data.processed.all_kpi_result
-    create_folders(all_kpi_result)
-    with open(all_kpi_result, "w", encoding="utf-8") as f:
+    all_kpi_csv = base_path_config.data.processed.all_kpi_csv
+    all_kpi_comparison_string_csv = base_path_config.data.processed.all_kpi_comparison_string_csv
+    all_kpi_comparison_percent_csv = base_path_config.data.processed.all_kpi_comparison_percent_csv
+    
+    create_folders(all_kpi_result, all_kpi_csv, all_kpi_comparison_string_csv, all_kpi_comparison_percent_csv)
+
+    for file_path in [all_kpi_result, all_kpi_csv, all_kpi_comparison_string_csv, all_kpi_comparison_percent_csv]:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("")
+
+    with open(all_kpi_csv, "w", encoding="utf-8") as f:
         f.write(f"")
 
-
-    
     scenario_results = []
     
     # 2. Iterate and Run
@@ -256,6 +287,55 @@ def main():
         result = run_scenario(sc_name, raw_path_cfg, base_param_config)
         scenario_results.append(result)
         
+    # 2.5 Lọc lấy KPI và lưu ra CSV ở dạng chuyển vị (Transpose)
+    if scenario_results:
+        # Tạo dictionary với key là tên scenario, value là dictionary chứa các KPI
+        kpi_dict = {res["scenario"]: res["kpi_data"] for res in scenario_results}
+        
+        # Tạo Pandas DataFrame từ dictionary.
+        # Khởi tạo mặc định từ dict kiểu này thì cột sẽ là SCENARIO và hàng sẽ là KPI
+        df_kpi = pd.DataFrame.from_dict(kpi_dict)
+        df_kpi.index.name = "Metric"
+        
+        # Lưu ra CSV. Bảng này sẽ tự động có dạng hàng là Tên KPI, Cột là Từng Scenario.
+        df_kpi.to_csv(all_kpi_csv)
+        print(f"[*] Đã xuất bảng tổng hợp KPI (đã chuyển vị) ra file: {all_kpi_csv}")
+
+        # Tính toán và xuất 2 bảng comparison nếu có từ 2 kịch bản trở lên
+        if len(df_kpi.columns) >= 2:
+            col_base = df_kpi.columns[0]
+            col_after = df_kpi.columns[1]
+
+            # Bảng 1: [dữ liệu baseline] -> [dữ liệu after]
+            df_string = pd.DataFrame(index=df_kpi.index)
+            df_string[f"{col_base} -> {col_after}"] = df_kpi[col_base].astype(str) + " -> " + df_kpi[col_after].astype(str)
+            df_string.index.name = "Metric"
+            df_string.to_csv(all_kpi_comparison_string_csv)
+            print(f"[*] Đã xuất bảng KPI comparison (string) ra file: {all_kpi_comparison_string_csv}")
+
+            # Bảng 2: Phần trăm thay đổi = (after / baseline * 100) - 100
+            df_percent = pd.DataFrame(index=df_kpi.index)
+
+            def calculate_percent_change(row):
+                base_val = row[col_base]
+                after_val = row[col_after]
+                try:
+                    b = float(base_val)
+                    a = float(after_val)
+                    if b != 0:
+                        change = (a / b * 100) - 100
+                        return f"{change:.2f}%"
+                    else:
+                        return "N/A"
+                except (ValueError, TypeError):
+                    return "N/A"
+
+            df_percent[f"% Change ({col_after} vs {col_base})"] = df_kpi.apply(calculate_percent_change, axis=1)
+            df_percent.index.name = "Metric"
+            df_percent.to_csv(all_kpi_comparison_percent_csv)
+            print(f"[*] Đã xuất bảng KPI comparison (percent) ra file: {all_kpi_comparison_percent_csv}")
+
+
     # 3. Compare Scenarios
     print(f"\n{'='*50}")
     print(f"STARTING COMPARISON FOR: {[r['scenario'] for r in scenario_results]}")
